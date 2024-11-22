@@ -1,4 +1,3 @@
-
 -- uppercases set header Cookie on request
 core.register_action("uppercase_set_cookie", { "http-req" }, function(txn)
     -- get set-cookie header from response
