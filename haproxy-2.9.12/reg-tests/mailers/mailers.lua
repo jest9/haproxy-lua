@@ -1,1 +1,0 @@
-../../examples/lua/mailers.lua
