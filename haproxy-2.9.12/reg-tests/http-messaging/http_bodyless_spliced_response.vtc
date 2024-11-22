@@ -1,0 +1,89 @@
+varnishtest "A test to be sure payload is skipped for bodyless responses when splicing is used"
+
+feature cmd "$HAPROXY_PROGRAM -cc 'feature(LINUX_SPLICE)'"
+feature cmd "$HAPROXY_PROGRAM $HAPROXY_ARGS -cc 'enabled(FAST-FORWARD)'"
+feature cmd "$HAPROXY_PROGRAM $HAPROXY_ARGS -cc 'enabled(SPLICE)'"
+feature ignore_unknown_macro
+
+#REQUIRE_VERSION=2.4
+
+server s1 {
+        rxreq
+        txresp \
+          -status 200 \
+          -body "skipped data"
+
+        rxreq
+        txresp \
+          -status 200 \
+          -bodylen 50000
+
+        rxreq
+        txresp \
+          -status 200 \
+	  -nolen -hdr "Transfer-Encoding: chunked"
+       chunkedlen 15
+       chunkedlen 1024
+       chunkedlen 4048
+       chunkedlen 50000
+       chunkedlen 0
+
+        rxreq
+        txresp \
+          -status 200 \
+          -body "last response"
+} -start
+
+haproxy h1 -conf {
+    global
+        # WT: limit false-positives causing "HTTP header incomplete" due to
+        # idle server connections being randomly used and randomly expiring
+        # under us.
+        tune.idle-pool.shared off
+
+    defaults
+        mode http
+        timeout connect "${HAPROXY_TEST_TIMEOUT-5s}"
+        timeout client  "${HAPROXY_TEST_TIMEOUT-5s}"
+        timeout server  "${HAPROXY_TEST_TIMEOUT-5s}"
+
+    listen fe1
+        bind "fd@${fe1}"
+        # Rewrite the method to be sure to get the response payload
+        # on the server side
+        http-request set-method GET
+        option splice-response
+        server s1 ${s1_addr}:${s1_port}
+} -start
+
+client c1 -connect ${h1_fe1_sock} {
+        txreq \
+            -req "HEAD" \
+            -url "/req1"
+        rxresp
+        expect resp.status == 200
+        expect resp.body == ""
+
+        txreq \
+            -req "HEAD" \
+            -url "/req2"
+        rxresp
+        expect resp.status == 200
+        expect resp.body == ""
+
+        txreq \
+            -req "HEAD" \
+            -url "/req3"
+        rxresp
+        expect resp.status == 200
+        expect resp.body == ""
+
+        # The last one have a body and validate the connection was not closed
+        # unexpectedly and no payload was received for previous requests
+        txreq \
+            -req "GET" \
+            -url "/req4"
+        rxresp
+        expect resp.status == 200
+        expect resp.body == "last response"
+} -run
