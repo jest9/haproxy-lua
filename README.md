@@ -1,5 +1,4 @@
 # haproxy-lua
-haproxy lua scripts
+ haproxy-lua scripts
 
-
-lua nonsense
+ make pesky pentesters who report weak cookie encryption go away with this quick easy method!
