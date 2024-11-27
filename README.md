@@ -3,10 +3,11 @@
 
  make pesky pentesters who report weak cookie encryption go away with this quick easy method!
 
+
  # setup
  uses openssl library from luarocks
  install luarocks following the steps from https://luarocks.org/
-
+ 
  ```
  sudo luarocks install openssl
  ```
