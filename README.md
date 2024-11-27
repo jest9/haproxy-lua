@@ -13,3 +13,7 @@
  ```
 
  make sure it is installed to the correct directory, the same dir for the version of lua your haproxy installation is using.
+
+ # future improvements
+
+ may write my own lua wrapper for openssl so I don't have to use library
