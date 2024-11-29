@@ -1,8 +1,8 @@
 # haproxy-lua
- haproxy-lua scripts
 
- make pesky pentesters who report weak cookie encryption go away with this quick easy method!
+quick and easy cookie encryption at haproxy reverse proxy via lua.
 
+used this cool library here : https://github.com/zhaozg/lua-openssl
 
  # setup
  uses openssl library from luarocks
